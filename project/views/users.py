@@ -1,25 +1,31 @@
 from flask import request
+from flask_login import current_user, login_required
 from flask_restx import abort, Namespace, Resource
 
 from project.exceptions import ItemNotFound
 from project.services import UsersService
 from project.setup_db import db
-from project.tools.security import admin_required, compare_password
 
-users_ns = Namespace("users")
 
+users_ns = Namespace("user")
 
 @users_ns.route("/")
-class UsersView(Resource):
-    # @admin_required
+class UserView(Resource):
+    @login_required
     @users_ns.response(200, "OK")
+    @users_ns.response(404, "User не найден")
     def get(self):
-        """Get all users"""
-        return UsersService(db.session).get_all_users()
+        """Get current user by token"""
+        user = UsersService(db.session).get_current_user()
+        if user:
+            return user
+        else:
+            abort(404, message="User `не найден`")
+
 
 
 @users_ns.route("/<int:user_id>")
-class UserView(Resource):
+class UserByIdView(Resource):
     # @admin_required
     @users_ns.response(200, "OK")
     @users_ns.response(404, "User не найден")
@@ -41,7 +47,6 @@ class UserView(Resource):
         except ItemNotFound:
             abort(404, message="User `не найден`")
 
-
 @users_ns.route("/password/<int:user_id>")
 class UserPatchView(Resource):
     # @admin_required
@@ -61,5 +66,3 @@ class UserPatchView(Resource):
             return UsersService(db.session).update_password(req_json)
         except ItemNotFound:
             abort(404, message="User `не найден`")
-
-

@@ -42,7 +42,7 @@ class AuthRegView(Resource):
     def post(self):
         req_json = request.json
         if None in req_json:
-            abort(400, "не корректный запрос")
+            abort(400, "некорректный запрос")
         return UsersService(db.session).create(req_json)
 
 
